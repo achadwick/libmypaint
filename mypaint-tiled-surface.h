@@ -31,7 +31,8 @@ typedef void (*MyPaintTiledSurfaceAreaChanged) (struct _MyPaintTiledSurface *sel
 /**
   * MyPaintTiledSurface:
   *
-  * Interface and convenience class for implementing a #MyPaintSurface backed by a tile store.
+  * Interface and convenience class for implementing a #MyPaintSurface
+  * backed by a tile store.
   *
   * The size of the surface is infinite, and consumers need just implement two vfuncs.
   */

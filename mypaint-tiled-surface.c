@@ -33,7 +33,14 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-void process_tile(MyPaintTiledSurface *self, int tx, int ty);
+
+/* Forward decls */
+
+static void
+process_tile(MyPaintTiledSurface *self, int tx, int ty);
+
+
+/* Default vfunc implmentations at this level */
 
 static void
 begin_atomic_default(MyPaintSurface *surface)
@@ -46,6 +53,7 @@ end_atomic_default(MyPaintSurface *surface, MyPaintRectangle *roi)
 {
     mypaint_tiled_surface_end_atomic((MyPaintTiledSurface *)surface, roi);
 }
+
 
 /**
  * mypaint_tiled_surface_begin_atomic: (skip)
@@ -73,7 +81,8 @@ mypaint_tiled_surface_begin_atomic(MyPaintTiledSurface *self)
  * Application code should only use mypaint_surface_end_atomic().
  */
 void
-mypaint_tiled_surface_end_atomic(MyPaintTiledSurface *self, MyPaintRectangle *roi)
+mypaint_tiled_surface_end_atomic (MyPaintTiledSurface *self,
+                                  MyPaintRectangle *roi)
 {
     // Process tiles
     TileIndex *tiles;
@@ -464,8 +473,10 @@ process_op(uint16_t *rgba_p, uint16_t *mask,
     }
 }
 
-// Must be threadsafe
-void
+// Process all pending operations for a single tile.
+// Must be threadsafe.
+
+static void
 process_tile(MyPaintTiledSurface *self, int tx, int ty)
 {
     TileIndex tile_index = {tx, ty};
@@ -498,7 +509,7 @@ process_tile(MyPaintTiledSurface *self, int tx, int ty)
 
 // OPTIMIZE: send a list of the exact changed rects instead of a bounding box
 // to minimize the area being composited? Profile to see the effect first.
-void
+static void
 update_dirty_bbox(MyPaintTiledSurface *self, OperationDataDrawDab *op)
 {
     int bb_x, bb_y, bb_w, bb_h;
@@ -513,7 +524,8 @@ update_dirty_bbox(MyPaintTiledSurface *self, OperationDataDrawDab *op)
 }
 
 // returns TRUE if the surface was modified
-gboolean draw_dab_internal (MyPaintTiledSurface *self, float x, float y,
+static gboolean
+draw_dab_internal (MyPaintTiledSurface *self, float x, float y,
                float radius,
                float color_r, float color_g, float color_b,
                float opaque, float hardness,
@@ -560,7 +572,7 @@ gboolean draw_dab_internal (MyPaintTiledSurface *self, float x, float y,
 
     // Determine the tiles influenced by operation, and queue it for processing for each tile
     float r_fringe = radius + 1.0f; // +1.0 should not be required, only to be sure
-      
+
     int tx1 = floor(floor(x - r_fringe) / MYPAINT_TILE_SIZE);
     int tx2 = floor(floor(x + r_fringe) / MYPAINT_TILE_SIZE);
     int ty1 = floor(floor(y - r_fringe) / MYPAINT_TILE_SIZE);
@@ -581,7 +593,8 @@ gboolean draw_dab_internal (MyPaintTiledSurface *self, float x, float y,
 }
 
 // returns TRUE if the surface was modified
-int draw_dab (MyPaintSurface *surface, float x, float y,
+static int
+draw_dab (MyPaintSurface *surface, float x, float y,
                float radius,
                float color_r, float color_g, float color_b,
                float opaque, float hardness,
