@@ -608,7 +608,7 @@ int draw_dab (MyPaintSurface *surface, float x, float y,
     if (draw_dab_internal(self, symm_x, y, radius, color_r, color_g, color_b,
                            opaque, hardness, color_a, aspect_ratio, -angle,
                            lock_alpha, colorize)) {
-        surface_modified = TRUE;
+        surface_modified = surface_modified || TRUE;
     }
 
   }
