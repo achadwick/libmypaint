@@ -39,6 +39,19 @@
 static void
 process_tile(MyPaintTiledSurface *self, int tx, int ty);
 
+static MyPaintTileRequest**
+tile_request_array_new (MyPaintTiledSurface *self, int tiles_n,
+                        TileIndex *tiles);
+
+static void
+tile_request_array_free (MyPaintTiledSurface *self,
+                         MyPaintTileRequest **requests,
+                         int tiles_n);
+
+void
+process_op (uint16_t *rgba_p, uint16_t *mask,
+            int tx, int ty, OperationDataDrawDab *op);
+
 
 /* Default vfunc implmentations at this level */
 
@@ -86,19 +99,65 @@ mypaint_tiled_surface_end_atomic (MyPaintTiledSurface *self,
 {
     // Process tiles
     TileIndex *tiles;
+    MyPaintTileRequest **requests;
     int tiles_n = operation_queue_get_dirty_tiles(self->operation_queue, &tiles);
-
-    #pragma omp parallel for schedule(static) if(self->threadsafe_tile_requests && tiles_n > 3)
-    for (int i = 0; i < tiles_n; i++) {
-        process_tile(self, tiles[i].x, tiles[i].y);
+    requests = tile_request_array_new(self, tiles_n, tiles);
+    if (requests) {
+        if (self->process_tiles) {
+            self->process_tiles(self, requests, tiles_n);
+        }
+        tile_request_array_free(self, requests, tiles_n);
     }
-
     operation_queue_clear_dirty_tiles(self->operation_queue);
-
     if (roi) {
         *roi = self->dirty_bbox;
     }
 }
+
+
+/**
+ * mypaint_tiled_surface_process_tiles: (skip)
+ *
+ * Batch-process zero or more started tile requests. This method is
+ * called between similarly batched calls to tile_request_start()
+ * and to tile_request_end().
+ *
+ * This function provides the default implementation of the
+ * #MyPaintTiledSurface::process_tiles vfunc. If this is overridden
+ * in subclasses, this implementation should be chained up to.
+ */
+
+void
+mypaint_tiled_surface_process_tiles (MyPaintTiledSurface *self,
+                                     MyPaintTileRequest **requests,
+                                     int tiles_n)
+{
+    #pragma omp parallel for schedule(static) if(self->threadsafe_tile_requests && tiles_n > 3)
+    for (int i = 0; i < tiles_n; i++) {
+        MyPaintTileRequest *request = requests[i];
+        if (!request)
+            continue;
+        TileIndex tile_index = { request->tx, request->ty };
+        OperationDataDrawDab *op
+            = operation_queue_pop(self->operation_queue, tile_index);
+        if (!op) {
+            continue;
+        }
+        uint16_t *rgba_p = requests[i]->buffer;
+        if (!rgba_p) {
+            printf("Warning: Unable to get tile!\n");
+            continue;
+        }
+
+        uint16_t mask[MYPAINT_TILE_SIZE*MYPAINT_TILE_SIZE+2*MYPAINT_TILE_SIZE];
+        while (op) {
+            process_op(rgba_p, mask, tile_index.x, tile_index.y, op);
+            free(op);
+            op = operation_queue_pop(self->operation_queue, tile_index);
+        }
+    }
+}
+
 
 /**
  * mypaint_tiled_surface_tile_request_start:
@@ -473,6 +532,56 @@ process_op(uint16_t *rgba_p, uint16_t *mask,
     }
 }
 
+
+// For processing tiles in bulk.
+// Alloc an array of new started MyPaintTileRequests for OMP processing.
+// Returns NULL if structures could not be allocated.
+
+static MyPaintTileRequest**
+tile_request_array_new (MyPaintTiledSurface *self, int tiles_n,
+                        TileIndex *tiles)
+{
+    MyPaintTileRequest **requests = NULL;
+    const int mipmap_level = 0;
+
+    requests = malloc(tiles_n * sizeof(MyPaintTileRequest*));
+    if (!requests) {
+        return NULL;
+    }
+    for (int i=0; i < tiles_n; ++i) {
+        MyPaintTileRequest *request = malloc(sizeof(MyPaintTileRequest));
+        if (!request) {
+            tile_request_array_free(self, requests, i);
+            requests = NULL;
+            break;
+        }
+        mypaint_tile_request_init(request, mipmap_level,
+                                  tiles[i].x, tiles[i].y, FALSE);
+        mypaint_tiled_surface_tile_request_start(self, request);
+        requests[i] = request;
+    }
+    return requests;
+}
+
+
+// For processing tiles in bulk.
+// End every request in an array of started MyPaintTileRequests,
+// and frees the array and all tile requests in it.
+
+static void
+tile_request_array_free (MyPaintTiledSurface *self,
+                         MyPaintTileRequest **requests, int tiles_n)
+{
+    for (int i=0; i < tiles_n; ++i) {
+        MyPaintTileRequest *request = requests[i];
+        mypaint_tiled_surface_tile_request_end(self, request);
+        free(request);
+        requests[i] = NULL;
+    }
+    free(requests);
+}
+
+
 // Process all pending operations for a single tile.
 // Must be threadsafe.
 
@@ -485,14 +594,15 @@ process_tile(MyPaintTiledSurface *self, int tx, int ty)
         return;
     }
 
-    MyPaintTileRequest request_data;
-    const int mipmap_level = 0;
-    mypaint_tile_request_init(&request_data, mipmap_level, tx, ty, FALSE);
+    MyPaintTileRequest **requests = tile_request_array_new(self, 1, &tile_index);
+    if (!requests) {
+        return;
+    }
 
-    mypaint_tiled_surface_tile_request_start(self, &request_data);
-    uint16_t * rgba_p = request_data.buffer;
+    uint16_t *rgba_p = requests[0]->buffer;
     if (!rgba_p) {
         printf("Warning: Unable to get tile!\n");
+        tile_request_array_free(self, requests, 1);
         return;
     }
 
@@ -504,7 +614,7 @@ process_tile(MyPaintTiledSurface *self, int tx, int ty)
         op = operation_queue_pop(self->operation_queue, tile_index);
     }
 
-    mypaint_tiled_surface_tile_request_end(self, &request_data);
+    tile_request_array_free(self, requests, 1);
 }
 
 // OPTIMIZE: send a list of the exact changed rects instead of a bounding box
@@ -757,6 +867,8 @@ mypaint_tiled_surface_init(MyPaintTiledSurface *self,
     self->surface_do_symmetry = FALSE;
     self->surface_center_x = 0.0f;
     self->operation_queue = operation_queue_new();
+
+    self->process_tiles = mypaint_tiled_surface_process_tiles;
 }
 
 /**

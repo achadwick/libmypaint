@@ -34,7 +34,8 @@ typedef void (*MyPaintTiledSurfaceAreaChanged) (struct _MyPaintTiledSurface *sel
   * Interface and convenience class for implementing a #MyPaintSurface
   * backed by a tile store.
   *
-  * The size of the surface is infinite, and consumers need just implement two vfuncs.
+  * The size of the surface is infinite, and consumers need just
+  * implement three vfuncs.
   */
 struct _MyPaintTiledSurface {
     MyPaintSurface parent;
@@ -47,6 +48,10 @@ struct _MyPaintTiledSurface {
     MyPaintRectangle dirty_bbox;
     gboolean threadsafe_tile_requests;
     int tile_size;
+
+    void (*process_tiles) (MyPaintTiledSurface *self,
+                           MyPaintTileRequest **requests,
+                           int tiles_n);
 };
 
 void
@@ -67,6 +72,10 @@ void mypaint_tiled_surface_tile_request_end(MyPaintTiledSurface *self, MyPaintTi
 
 void mypaint_tiled_surface_begin_atomic(MyPaintTiledSurface *self);
 void mypaint_tiled_surface_end_atomic(MyPaintTiledSurface *self, MyPaintRectangle *roi);
+
+void mypaint_tiled_surface_process_tiles (MyPaintTiledSurface *self,
+                                          MyPaintTileRequest **requests,
+                                          int tiles_n);
 
 G_END_DECLS
 
