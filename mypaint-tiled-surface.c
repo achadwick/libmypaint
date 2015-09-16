@@ -36,12 +36,9 @@
 
 /* Forward decls */
 
-static void
-process_tile(MyPaintTiledSurface *self, int tx, int ty);
-
 static MyPaintTileRequest**
 tile_request_array_new (MyPaintTiledSurface *self, int tiles_n,
-                        TileIndex *tiles);
+                        TileIndex *tiles, gboolean readonly);
 
 static void
 tile_request_array_free (MyPaintTiledSurface *self,
@@ -101,7 +98,7 @@ mypaint_tiled_surface_end_atomic (MyPaintTiledSurface *self,
     TileIndex *tiles;
     MyPaintTileRequest **requests;
     int tiles_n = operation_queue_get_dirty_tiles(self->operation_queue, &tiles);
-    requests = tile_request_array_new(self, tiles_n, tiles);
+    requests = tile_request_array_new(self, tiles_n, tiles, FALSE);
     if (requests) {
         if (self->process_tiles) {
             self->process_tiles(self, requests, tiles_n);
@@ -539,7 +536,7 @@ process_op(uint16_t *rgba_p, uint16_t *mask,
 
 static MyPaintTileRequest**
 tile_request_array_new (MyPaintTiledSurface *self, int tiles_n,
-                        TileIndex *tiles)
+                        TileIndex *tiles, gboolean readonly)
 {
     MyPaintTileRequest **requests = NULL;
     const int mipmap_level = 0;
@@ -556,7 +553,7 @@ tile_request_array_new (MyPaintTiledSurface *self, int tiles_n,
             break;
         }
         mypaint_tile_request_init(request, mipmap_level,
-                                  tiles[i].x, tiles[i].y, FALSE);
+                                  tiles[i].x, tiles[i].y, readonly);
         mypaint_tiled_surface_tile_request_start(self, request);
         requests[i] = request;
     }
@@ -581,41 +578,6 @@ tile_request_array_free (MyPaintTiledSurface *self,
     free(requests);
 }
 
-
-// Process all pending operations for a single tile.
-// Must be threadsafe.
-
-static void
-process_tile(MyPaintTiledSurface *self, int tx, int ty)
-{
-    TileIndex tile_index = {tx, ty};
-    OperationDataDrawDab *op = operation_queue_pop(self->operation_queue, tile_index);
-    if (!op) {
-        return;
-    }
-
-    MyPaintTileRequest **requests = tile_request_array_new(self, 1, &tile_index);
-    if (!requests) {
-        return;
-    }
-
-    uint16_t *rgba_p = requests[0]->buffer;
-    if (!rgba_p) {
-        printf("Warning: Unable to get tile!\n");
-        tile_request_array_free(self, requests, 1);
-        return;
-    }
-
-    uint16_t mask[MYPAINT_TILE_SIZE*MYPAINT_TILE_SIZE+2*MYPAINT_TILE_SIZE];
-
-    while (op) {
-        process_op(rgba_p, mask, tile_index.x, tile_index.y, op);
-        free(op);
-        op = operation_queue_pop(self->operation_queue, tile_index);
-    }
-
-    tile_request_array_free(self, requests, 1);
-}
 
 // OPTIMIZE: send a list of the exact changed rects instead of a bounding box
 // to minimize the area being composited? Profile to see the effect first.
@@ -760,8 +722,8 @@ void get_color (MyPaintSurface *surface, float x, float y,
     *color_g = 1.0f;
     *color_b = 0.0f;
 
-    // WARNING: some code duplication with draw_dab
-
+    // Calculate the range of tiles needed for this inspection,
+    // and whether we need to resolve any pending draw ops.
     float r_fringe = radius + 1.0f; // +1 should not be required, only to be sure
 
     int tx1 = floor(floor(x - r_fringe) / MYPAINT_TILE_SIZE);
@@ -772,25 +734,58 @@ void get_color (MyPaintSurface *surface, float x, float y,
     const unsigned int n_cols = tx2 - tx1 + 1;
     const unsigned int tiles_n = n_rows * n_cols;
 
+    TileIndex *tiles = malloc(tiles_n * sizeof(TileIndex));
+    if (! tiles) {
+        return;
+    }
+    gboolean readonly = TRUE;
+    for (int ty = ty1; ty <= ty2; ty++) {
+        for (int tx = tx1; tx <= tx2; tx++) {
+            int i = (tx - tx1) + ((ty - ty1) * n_cols);
+#ifdef HEAVY_DEBUG
+            assert(i < tiles_n);
+            assert(i >= 0);
+#endif
+            TileIndex tile_index = { tx, ty };
+            if (readonly) {
+                if (operation_queue_peek_first(self->operation_queue,
+                                               tile_index)) {
+                    readonly = FALSE;
+                }
+            }
+            tiles[i] = tile_index;
+        }
+    }
+
+    // Request the memory we need.
+    MyPaintTileRequest **requests
+        = tile_request_array_new(self, tiles_n, tiles, readonly);
+    free(tiles);
+    if (! requests) {
+        return;
+    }
+
+    // Flush queued draw_dab operations, if needed (potential RW part)
+    if ((! readonly) && self->process_tiles) {
+        self->process_tiles(self, requests, tiles_n);
+    }
+
+    // With the same open tile requests,
+    // sum all data within the masks (RO part)
+    // This body could be done as a vfunc too, just like process_tiles,
+    // if Python code needs running in parallel.
     #pragma omp parallel for \
             schedule(static) \
             reduction(+: sum_weight, sum_r, sum_g, sum_b, sum_a) \
             if(self->threadsafe_tile_requests && tiles_n > 3)
-    for (int ty = ty1; ty <= ty2; ty++) {
-      for (int tx = tx1; tx <= tx2; tx++) {
-
-        // Flush queued draw_dab operations
-        process_tile(self, tx, ty);
-
-        MyPaintTileRequest request_data;
-        const int mipmap_level = 0;
-        mypaint_tile_request_init(&request_data, mipmap_level, tx, ty, TRUE);
-
-        mypaint_tiled_surface_tile_request_start(self, &request_data);
-        uint16_t * rgba_p = request_data.buffer;
+    for (int i=0; i < tiles_n; ++i) {
+        MyPaintTileRequest *request_data = requests[i];
+        const int tx = request_data->tx;
+        const int ty = request_data->ty;
+        uint16_t *rgba_p = request_data->buffer;
         if (!rgba_p) {
-          printf("Warning: Unable to get tile!\n");
-          break;
+            printf("Warning: Unable to get tile!\n");
+            continue;
         }
 
         // first, we calculate the mask (opacity for each pixel)
@@ -812,10 +807,9 @@ void get_color (MyPaintSurface *surface, float x, float y,
         sum_g += sg;
         sum_b += sb;
         sum_a += sa;
-
-        mypaint_tiled_surface_tile_request_end(self, &request_data);
-      }
     }
+
+    tile_request_array_free(self, requests, tiles_n);
 
     assert(sum_weight > 0.0f);
     sum_a /= sum_weight;
