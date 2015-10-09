@@ -1,40 +1,40 @@
-# Slovak language translation of libmypaint
-# Copyright (C) 2015 Dušan Kazik
-# This file is distributed under the same license as the libmypaint package
-# Dušan Kazik <prescott66@gmail.com>, 2015.
+# Sardinian translations for PACKAGE package.
+# Copyright (C) 2015 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2015.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libmypaint for mypaint 1.2.0\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-07-04 18:33+0100\n"
-"PO-Revision-Date: 2015-10-06 14:37+0200\n"
-"Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
-"Language-Team: Slovak "
-"<https://hosted.weblate.org/projects/mypaint/mypaint/sk/>\n"
-"Language: sk\n"
+"PO-Revision-Date: 2015-09-20 18:28+0200\n"
+"Last-Translator: Lu Ca <lmelonimamo@yahoo.it>\n"
+"Language-Team: Sardinian "
+"<https://hosted.weblate.org/projects/mypaint/libmypaint/sc/>\n"
+"Language: sc\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Weblate 2.4-dev\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.4\n"
 
 #: ../brushsettings-gen.h:4
-#, fuzzy
 msgid "Opacity"
-msgstr "Krytie"
+msgstr "Annapu"
 
 #: ../brushsettings-gen.h:4
 msgid ""
 "0 means brush is transparent, 1 fully visible\n"
 "(also known as alpha or opacity)"
 msgstr ""
-"0 znamená, že štetec je priehľadný, 1 znamená plnú viditeľnosť\n"
-"(tiež známe ako alfa kanál alebo krytie)"
+"0 bolet nàrrere chi su pintzellu est trasparente, 1 chi est visìbile de su "
+"totu\n"
+"(connotu fintzas comente canale alpha o annapu)"
 
 #: ../brushsettings-gen.h:5
 msgid "Opacity multiply"
-msgstr "Násobenie krytia"
+msgstr "Multiplicadore annapu"
 
 #: ../brushsettings-gen.h:5
 msgid ""
@@ -62,7 +62,7 @@ msgstr ""
 
 #: ../brushsettings-gen.h:7
 msgid "Radius"
-msgstr "Polomer"
+msgstr ""
 
 #: ../brushsettings-gen.h:7
 msgid ""
@@ -70,25 +70,20 @@ msgid ""
 " 0.7 means 2 pixels\n"
 " 3.0 means 20 pixels"
 msgstr ""
-"Základný polomer štetca (logaritmický)\n"
-"0,7 znamená 2 pixely\n"
-"3,0 znamená 20 pixelov"
 
 #: ../brushsettings-gen.h:8
 msgid "Hardness"
-msgstr "Tvrdosť"
+msgstr ""
 
 #: ../brushsettings-gen.h:8
 msgid ""
 "Hard brush-circle borders (setting to zero will draw nothing). To reach the "
 "maximum hardness, you need to disable Pixel feather."
 msgstr ""
-"Tvrdé okraje kruhu štetca (nastavením na nulu sa nič nenakreslí). Na "
-"dosiahnutie najvyššej tvrdosti, musíte zakázať Zjemnenie pixelov."
 
 #: ../brushsettings-gen.h:9
 msgid "Pixel feather"
-msgstr "Zjemnenie pixelov"
+msgstr ""
 
 #: ../brushsettings-gen.h:9
 msgid ""
@@ -194,7 +189,7 @@ msgstr ""
 
 #: ../brushsettings-gen.h:19
 msgid "Offset by speed"
-msgstr "Posun podľa rýchlosti"
+msgstr ""
 
 #: ../brushsettings-gen.h:19
 msgid ""
@@ -203,10 +198,6 @@ msgid ""
 "> 0 draw where the pointer moves to\n"
 "< 0 draw where the pointer comes from"
 msgstr ""
-"Zmení pozíciu v závislosti od rýchlosti ukazovateľa\n"
-"= 0 zakázaný\n"
-"> 0 kreslenie tam, kam sa posúva ukazovateľ\n"
-"< 0 kreslenie tam, odkiaľ prichádza ukazovateľ"
 
 #: ../brushsettings-gen.h:20
 msgid "Offset by speed filter"
@@ -248,23 +239,23 @@ msgstr ""
 
 #: ../brushsettings-gen.h:24
 msgid "Color hue"
-msgstr "Odtieň farby"
+msgstr ""
 
 #: ../brushsettings-gen.h:25
 msgid "Color saturation"
-msgstr "Sýtosť farby"
+msgstr ""
 
 #: ../brushsettings-gen.h:26
 msgid "Color value"
-msgstr "Hodnota farby"
+msgstr ""
 
 #: ../brushsettings-gen.h:26
 msgid "Color value (brightness, intensity)"
-msgstr "Hodnota farby (jas, intenzita)"
+msgstr ""
 
 #: ../brushsettings-gen.h:27
 msgid "Save color"
-msgstr "Uloženie farby"
+msgstr ""
 
 #: ../brushsettings-gen.h:27
 msgid ""
@@ -338,9 +329,8 @@ msgid ""
 msgstr ""
 
 #: ../brushsettings-gen.h:33
-#, fuzzy
 msgid "Smudge"
-msgstr "Rozmazanie"
+msgstr ""
 
 #: ../brushsettings-gen.h:33
 msgid ""
@@ -380,9 +370,8 @@ msgid ""
 msgstr ""
 
 #: ../brushsettings-gen.h:36
-#, fuzzy
 msgid "Eraser"
-msgstr "Guma"
+msgstr ""
 
 #: ../brushsettings-gen.h:36
 msgid ""
@@ -486,7 +475,7 @@ msgstr ""
 
 #: ../brushsettings-gen.h:45
 msgid "Lock alpha"
-msgstr "Uzamknúť alfa kanál"
+msgstr ""
 
 #: ../brushsettings-gen.h:45
 msgid ""
@@ -496,22 +485,16 @@ msgid ""
 " 0.5 half of the paint gets applied normally\n"
 " 1.0 alpha channel fully locked"
 msgstr ""
-"Nezmení alfa kanál vrstvy (kreslenie iba tam, kde už je farba)\n"
-" 0.0 normálne kreslenie\n"
-" 0.5 polovica farby je normálne použitá\n"
-" 1.0 alfa kanál plne uzamknutý"
 
 #: ../brushsettings-gen.h:46
 msgid "Colorize"
-msgstr "Ofarbenie"
+msgstr ""
 
 #: ../brushsettings-gen.h:46
 msgid ""
 "Colorize the target layer, setting its hue and saturation from the active "
 "brush color while retaining its value and alpha."
 msgstr ""
-"Ofarbenie cieľovej vrstvy nastavením jej odtieňu a sýtosti z aktívnej farby "
-"štetca so zachovaním svojej hodnoty a alfa kanálu."
 
 #: ../brushsettings-gen.h:47
 msgid "Snap to pixel"
@@ -525,19 +508,17 @@ msgstr ""
 
 #: ../brushsettings-gen.h:48
 msgid "Pressure gain"
-msgstr "Zosilnenie tlaku"
+msgstr ""
 
 #: ../brushsettings-gen.h:48
 msgid ""
 "This changes how hard you have to press. It multiplies tablet pressure by a "
 "constant factor."
 msgstr ""
-"Týmto sa zmení ako tvrdo tlačíte. Násobí tlak tabletu konštantným násobkom."
 
 #: ../brushsettings-gen.h:53
-#, fuzzy
 msgid "Pressure"
-msgstr "Tlak"
+msgstr ""
 
 #: ../brushsettings-gen.h:53
 msgid ""
@@ -545,9 +526,6 @@ msgid ""
 "get larger when a pressure gain is used. If you use the mouse, it will be "
 "0.5 when a button is pressed and 0.0 otherwise."
 msgstr ""
-"Tlak hlásený tabletom. Obvykle býva v rozsahu 0,0 a 1,0 ale môže byť väčší "
-"pri použití zosilnenia tlaku. Ak používate myš, hodnota bude 0,5 pri "
-"stlačení tlačidla a 0,0 pri uvoľnení tlačidla."
 
 #: ../brushsettings-gen.h:54
 msgid "Fine speed"
@@ -581,9 +559,8 @@ msgid ""
 msgstr ""
 
 #: ../brushsettings-gen.h:57
-#, fuzzy
 msgid "Stroke"
-msgstr "Ťah"
+msgstr ""
 
 #: ../brushsettings-gen.h:57
 msgid ""
@@ -624,13 +601,10 @@ msgid ""
 msgstr ""
 
 #: ../brushsettings-gen.h:61
-#, fuzzy
 msgid "Custom"
-msgstr "Vlastné"
+msgstr ""
 
 #: ../brushsettings-gen.h:61
 msgid ""
 "This is a user defined input. Look at the 'custom input' setting for details."
 msgstr ""
-"Toto je používateľom určený vstup. Pre viac podrobností si pozrite "
-"nastavenie „vlastný vstup“."
